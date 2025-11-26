@@ -19,7 +19,9 @@
 
 ### 在线使用
 
-直接访问 GitHub Pages（部署后可用）或本地打开 `index.html` 即可使用。
+👉 **直接访问**: [https://answer42answer.github.io/sticker-slicer/](https://answer42answer.github.io/sticker-slicer/)
+
+无需下载，打开即用！
 
 ### 本地运行
 
