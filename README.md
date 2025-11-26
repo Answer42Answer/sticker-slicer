@@ -21,7 +21,13 @@
 
 👉 **直接访问**: [https://answer42answer.github.io/sticker-slicer/](https://answer42answer.github.io/sticker-slicer/)
 
-无需下载，打开即用！
+无需下载，打开即用！手机扫码也能用 👇
+
+<p align="center">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://answer42answer.github.io/sticker-slicer/" alt="扫码访问" width="200">
+  <br>
+  <sub>📱 扫码立即体验</sub>
+</p>
 
 ### 本地运行
 
