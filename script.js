@@ -70,6 +70,11 @@ function handleFile(file) {
         return;
     }
 
+    // 📊 统计：上传图片
+    if (typeof trackEvent === 'function') {
+        trackEvent('upload', { fileType: file.type, fileSize: file.size });
+    }
+
     // Extract filename without extension
     fileName = file.name.replace(/\.[^/.]+$/, '') || 'stickers';
 
@@ -216,9 +221,16 @@ colsInput.addEventListener('change', () => {
 // ==================== Slicing Algorithm ====================
 async function sliceImage() {
     if (!currentImage) return;
-    
+
     const naturalWidth = currentImage.naturalWidth;
     const naturalHeight = currentImage.naturalHeight;
+
+    // 📊 统计：切割图片
+    const rows = parseInt(rowsInput.value) || 4;
+    const cols = parseInt(colsInput.value) || 4;
+    if (typeof trackEvent === 'function') {
+        trackEvent('slice', { rows, cols, totalSlices: rows * cols });
+    }
     
     // Sort lines and create boundaries
     const sortedRowLines = [...rowLines].sort((a, b) => a - b);
@@ -324,6 +336,14 @@ async function downloadSlices() {
     
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, zipName);
+
+    // 📊 统计：下载
+    if (typeof trackEvent === 'function') {
+        trackEvent('download', { 
+            count: items.length, 
+            isSelected: selectedSlices.size > 0 
+        });
+    }
 }
 
 downloadBtn.addEventListener('click', downloadSlices);
