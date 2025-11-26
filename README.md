@@ -6,6 +6,10 @@
 ![Platform](https://img.shields.io/badge/platform-Web-brightgreen.svg)
 ![No Server](https://img.shields.io/badge/server-none-orange.svg)
 
+<p align="center">
+  <img src="https://answer42.oss-cn-shanghai.aliyuncs.com/sticker-slicer-product.jpg" alt="产品界面预览" width="800">
+</p>
+
 ## ✨ 功能特性
 
 - 🖼️ **拖拽上传** - 支持拖拽或点击上传 PNG、JPG、GIF 图片
