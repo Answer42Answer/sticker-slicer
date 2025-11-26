@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✂️ 表情包切图小工具</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --success-hover: #059669;
+            --grid-line: #6366f1;
+            --grid-line-drag: #4ade80;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 0 4px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+        }
+
+        /* Main Container */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
+
+        /* Upload Zone */
+        #uploadZone {
+            height: 300px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #uploadZone:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        #uploadZone.dragover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        #uploadZone .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        #uploadZone .upload-text {
+            font-size: 16px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        #uploadZone .upload-hint {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Editor Zone */
+        #editorZone {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .control-group input[type="number"] {
+            width: 70px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .controls-right {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Preview Container */
+        .preview-container {
+            position: relative;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        #sourceImage {
+            width: 100%;
+            display: block;
+        }
+
+        #gridOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Grid Lines */
+        .grid-line {
+            position: absolute;
+            background: var(--grid-line);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .grid-line-h {
+            height: 2px;
+            width: 100%;
+            cursor: row-resize;
+            transform: translateY(-1px);
+            box-shadow: 0 0 0 1px white;
+        }
+
+        .grid-line-v {
+            width: 2px;
+            height: 100%;
+            cursor: col-resize;
+            transform: translateX(-1px);
+            box-shadow: 0 0 0 1px white;
+        }
+
+        .grid-line:hover {
+            background: white;
+            box-shadow: 0 0 0 2px var(--grid-line);
+            z-index: 20;
+        }
+
+        .grid-line.dragging {
+            background: var(--grid-line-drag);
+            box-shadow: 0 0 0 2px white;
+            z-index: 30;
+        }
+
+        .editor-hint {
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Results Card */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .results-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .results-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .count-badge {
+            background: var(--accent);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        #selectionInfo {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .results-actions.hidden {
+            display: none;
+        }
+
+        /* Results Grid */
+        #resultsGrid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        #resultsGrid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #resultsGrid::-webkit-scrollbar-track {
+            background: var(--bg);
+            border-radius: 3px;
+        }
+
+        #resultsGrid::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        #resultsGrid::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Slice Card */
+        .slice-card {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            background: var(--bg);
+        }
+
+        .slice-card:hover {
+            border-color: var(--accent);
+        }
+
+        .slice-card.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .slice-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .slice-check {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .slice-card.selected .slice-check {
+            background: var(--success);
+            border-color: white;
+        }
+
+        .slice-card.selected .slice-check::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Placeholder */
+        .placeholder {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .placeholder-text {
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            max-width: 1400px;
+            margin: 32px auto 0;
+            padding: 0 4px;
+        }
+
+        .footer-card {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .footer-cta {
+            font-size: 15px;
+            color: var(--text);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .footer-cta .highlight {
+            color: #fbbf24;
+            font-weight: 500;
+        }
+
+        .footer-platforms {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .footer-platforms {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .footer-platforms {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .platform-tag {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .platform-tag:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .platform-tag .platform-icon {
+            font-size: 16px;
+        }
+
+        .platform-tag .platform-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .platform-tag .platform-name {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .platform-tag .platform-search {
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .platform-tag .platform-search::before {
+            content: '搜索：';
+            color: var(--text-secondary);
+        }
+
+        .platform-tag .platform-id {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .platform-tag .platform-qr {
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            margin-top: 10px;
+            background: white;
+            padding: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .platform-tag .platform-qr:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .platform-tag .platform-qr img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        /* QR Modal */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .qr-modal.active {
+            display: flex;
+        }
+
+        .qr-modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .qr-modal-content img {
+            max-width: 400px;
+            max-height: 400px;
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .qr-modal-hint {
+            text-align: center;
+            margin-top: 12px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 800px) {
+            .footer-card {
+                padding: 20px 16px;
+            }
+            
+            .platform-tag {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✂️ 表情包切图小工具</h1>
+        <button class="btn btn-secondary" id="reloadBtn">重置</button>
+    </div>
+
+    <div class="container">
+        <!-- Left Column: Editor -->
+        <div class="card">
+            <!-- Upload Zone -->
+            <div id="uploadZone">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽上传图片</div>
+                <div class="upload-hint">支持 PNG, JPG, GIF</div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*">
+
+            <!-- Editor Zone -->
+            <div id="editorZone">
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="rowsInput">行数</label>
+                        <input type="number" id="rowsInput" value="4" min="1" max="20">
+                    </div>
+                    <div class="control-group">
+                        <label for="colsInput">列数</label>
+                        <input type="number" id="colsInput" value="4" min="1" max="20">
+                    </div>
+                    <div class="controls-right">
+                        <button class="btn btn-secondary" id="resetUploadBtn">更换图片</button>
+                        <button class="btn btn-primary" id="sliceBtn">⚡️ 开始切割</button>
+                    </div>
+                </div>
+                <div class="preview-container">
+                    <img id="sourceImage" alt="Source">
+                    <div id="gridOverlay"></div>
+                </div>
+                <div class="editor-hint">👆 拖拽网格线微调，使其精确对齐</div>
+            </div>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="card">
+            <div class="results-header">
+                <div class="results-title">
+                    <h3>切割结果 (<span id="countBadge">0</span>)</h3>
+                    <span id="selectionInfo">已选 <span id="selectionCount">0</span> 个</span>
+                </div>
+                <div class="results-actions hidden" id="resultsActions">
+                    <button class="btn btn-secondary" id="clearResultsBtn">🗑️ 清空</button>
+                    <button class="btn btn-success" id="downloadBtn">📥 下载全部</button>
+                </div>
+            </div>
+            <div id="resultsGrid">
+                <div class="placeholder">
+                    <div class="placeholder-icon">📷</div>
+                    <div class="placeholder-text">暂无结果<br>请上传图片并点击切割</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer: 账号引流 -->
+    <footer class="footer">
+        <div class="footer-card">
+            <p class="footer-cta">
+                如果这个小工具对你有帮助，愿意成为我的<span class="highlight">「创始粉丝」</span>吗？🌟<br>
+                关注、点赞、收藏、转发，你的每一份支持都是我持续创作的动力！
+            </p>
+            <div class="footer-platforms">
+                <div class="platform-tag">
+                    <span class="platform-icon">🎵</span>
+                    <div class="platform-info">
+                        <span class="platform-name">抖音</span>
+                        <span class="platform-search">答案42</span>
+                        <span class="platform-id">抖音号：35542199873</span>
+                        <div class="platform-qr">
+                            <img src="https://answer42.oss-cn-shanghai.aliyuncs.com/douyin.JPG" alt="抖音二维码">
+                        </div>
+                    </div>
+                </div>
+                <div class="platform-tag">
+                    <span class="platform-icon">📕</span>
+                    <div class="platform-info">
+                        <span class="platform-name">小红书</span>
+                        <span class="platform-search">答案42</span>
+                        <span class="platform-id">小红书号：27422552916</span>
+                        <div class="platform-qr">
+                            <img src="https://answer42.oss-cn-shanghai.aliyuncs.com/rednote.JPG" alt="小红书二维码">
+                        </div>
+                    </div>
+                </div>
+                <div class="platform-tag">
+                    <span class="platform-icon">💬</span>
+                    <div class="platform-info">
+                        <span class="platform-name">视频号</span>
+                        <span class="platform-search">答案の42</span>
+                        <span class="platform-id">ID：sph2zLiOMpNNeim</span>
+                        <div class="platform-qr">
+                            <img src="https://answer42.oss-cn-shanghai.aliyuncs.com/wechat.JPG" alt="视频号二维码">
+                        </div>
+                    </div>
+                </div>
+                <div class="platform-tag">
+                    <span class="platform-icon">📺</span>
+                    <div class="platform-info">
+                        <span class="platform-name">Bilibili</span>
+                        <span class="platform-search">答案_42</span>
+                        <span class="platform-id">UID：3632318019275083</span>
+                        <div class="platform-qr">
+                            <img src="https://answer42.oss-cn-shanghai.aliyuncs.com/bilibili.PNG" alt="Bilibili二维码">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="footer-note">Made with ❤️ by 答案42 · 更多AI玩法持续更新中</p>
+        </div>
+    </footer>
+
+    <!-- QR Code Modal -->
+    <div class="qr-modal" id="qrModal">
+        <div class="qr-modal-content">
+            <img id="qrModalImg" src="" alt="二维码大图">
+            <p class="qr-modal-hint">点击任意位置关闭</p>
+        </div>
+    </div>
+
+    <!-- Dependencies (本地化，无需外网CDN) -->
+    <script src="lib/jszip.min.js"></script>
+    <script src="lib/FileSaver.min.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- QR Modal Script -->
+    <script>
+        const qrModal = document.getElementById('qrModal');
+        const qrModalImg = document.getElementById('qrModalImg');
+        
+        // 给所有二维码添加点击事件
+        document.querySelectorAll('.platform-qr').forEach(qr => {
+            qr.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const imgSrc = qr.querySelector('img').src;
+                qrModalImg.src = imgSrc;
+                qrModal.classList.add('active');
+            });
+        });
+        
+        // 点击弹窗关闭
+        qrModal.addEventListener('click', () => {
+            qrModal.classList.remove('active');
+        });
+        
+        // ESC 键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                qrModal.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
+
