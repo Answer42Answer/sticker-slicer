@@ -583,6 +583,65 @@
             color: var(--text-secondary);
         }
 
+        /* Stats Section */
+        .stats-section {
+            max-width: 1400px;
+            margin: 32px auto 0;
+            padding: 0 4px;
+        }
+
+        .stats-container {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 16px 8px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         @media (max-width: 800px) {
             .footer-card {
                 padding: 20px 16px;
@@ -656,6 +715,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Stats Display -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stats-title">📊 工具使用统计</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👀</div>
+                    <div class="stat-value" id="statPageView">--</div>
+                    <div class="stat-label">总访问量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📤</div>
+                    <div class="stat-value" id="statUpload">--</div>
+                    <div class="stat-label">上传次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✂️</div>
+                    <div class="stat-value" id="statSlice">--</div>
+                    <div class="stat-label">切割次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📥</div>
+                    <div class="stat-value" id="statDownload">--</div>
+                    <div class="stat-label">下载次数</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer: 账号引流 -->
     <footer class="footer">
@@ -751,6 +839,36 @@
         
         // 页面访问统计
         trackEvent('page_view');
+        
+        // 加载统计数据展示
+        async function loadStats() {
+            try {
+                const { data, error } = await supabase
+                    .from('analytics_events')
+                    .select('event_type');
+                
+                if (error) throw error;
+                
+                // 统计各类型数量
+                const counts = { page_view: 0, upload: 0, slice: 0, download: 0 };
+                data.forEach(row => {
+                    if (counts.hasOwnProperty(row.event_type)) {
+                        counts[row.event_type]++;
+                    }
+                });
+                
+                // 更新显示
+                document.getElementById('statPageView').textContent = counts.page_view.toLocaleString();
+                document.getElementById('statUpload').textContent = counts.upload.toLocaleString();
+                document.getElementById('statSlice').textContent = counts.slice.toLocaleString();
+                document.getElementById('statDownload').textContent = counts.download.toLocaleString();
+            } catch (e) {
+                console.log('Stats load error:', e);
+            }
+        }
+        
+        // 延迟加载统计，不阻塞页面
+        setTimeout(loadStats, 1000);
     </script>
     
     <script src="script.js"></script>
